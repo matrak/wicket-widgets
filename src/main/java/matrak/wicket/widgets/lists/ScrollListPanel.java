@@ -24,8 +24,6 @@ public abstract class ScrollListPanel<T> extends GenericPanel<Pagination<T>> {
 	private boolean nested = false;
 	protected IModel<Integer> offsetModel;
 	
-	protected int itemsPerPage = 4;
-	
 	public ScrollListPanel(String wicketId) {
 		this(wicketId, 0, false);
 	}
@@ -50,6 +48,10 @@ public abstract class ScrollListPanel<T> extends GenericPanel<Pagination<T>> {
 		});
 		
 		final WebMarkupContainer nextPageContainer = new WebMarkupContainer("nextPageContainer");
+		nextPageContainer.setOutputMarkupId(true);
+		add(nextPageContainer);
+		
+		final WebMarkupContainer nextPageLinkContainer = new WebMarkupContainer("nextPageLinkContainer");
 		AjaxLink<Void> nextPageLink = new AjaxLink<Void>("nextPageLink") 
 		{
 
@@ -59,7 +61,7 @@ public abstract class ScrollListPanel<T> extends GenericPanel<Pagination<T>> {
 			public void onClick(AjaxRequestTarget target) 
 			{
 				int offset = offsetModel.getObject();
-				ScrollListPanel<T> nextPage = nextPage("nextPageContainer", offset + itemsPerPage, true);
+				ScrollListPanel<T> nextPage = nextPage("nextPageContainer", offset, true);
 				nextPageContainer.replaceWith(nextPage);
 				getParent().setVisibilityAllowed(false);
 				target.add(getParent(), nextPage);
@@ -68,10 +70,7 @@ public abstract class ScrollListPanel<T> extends GenericPanel<Pagination<T>> {
 			@Override
 			protected void onConfigure() 
 			{
-				// The "if" prevents previous NewsPanelList to query the LDM.
-				// In "onClick" the previous link will be set to
-				// "setVisibilityAllowed(false)",
-				// so for that case we do not need to query the LDM.
+				// Prevent previous (hidden) ScrollListPanel link from query the LDM.
 				if (getParent().isVisibilityAllowed()) {
 					Pagination<T> listing = ScrollListPanel.this.getModelObject();
 					getParent().setVisibilityAllowed(!listing.lastPage());
@@ -80,20 +79,11 @@ public abstract class ScrollListPanel<T> extends GenericPanel<Pagination<T>> {
 			}
 		};
 		nextPageLink.setOutputMarkupId(true);
-		nextPageLink.setBody(new ResourceModel("news-panel.older-link.label"));
-		nextPageContainer.add(nextPageLink);
-		nextPageContainer.setOutputMarkupId(true);
-		add(nextPageContainer);		
+		nextPageLink.setBody(new ResourceModel("scrolllist.nextpage.button"));
+		nextPageLinkContainer.add(nextPageLink);
+		nextPageLinkContainer.setOutputMarkupId(true);
+		add(nextPageLinkContainer);		
 	}
-	
-//	@Override
-//	protected void onConfigure() {
-//		super.onConfigure();
-//		if (!nested && !get("olderNewsContainer").isVisibilityAllowed()) {
-//			get("olderNewsContainer").setVisibilityAllowed(true);
-//			get("olderPlaceholder").replaceWith(olderPlaceholder);
-//		}
-//	}
 	
 	private class PaginationModel extends LoadableDetachableModel<Pagination<T>> {
 		
@@ -108,6 +98,6 @@ public abstract class ScrollListPanel<T> extends GenericPanel<Pagination<T>> {
 	
 	
 	protected abstract void populateItem(ListItem<T> item, IModel<T> itemModel);
-	protected abstract <S extends ScrollListPanel<T>> S nextPage(String wicketId, int offset, boolean nested);
+	protected abstract <S extends ScrollListPanel<T>> S nextPage(String wicketId, int lastOffset, boolean nested);
 	protected abstract Pagination<T> loadPagination(int offset);
 }

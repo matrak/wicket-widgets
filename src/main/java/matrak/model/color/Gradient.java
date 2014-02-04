@@ -1,15 +1,16 @@
 package matrak.model.color;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-
-import matrak.paging.Pagination;
 
 // http://harmoniccode.blogspot.de/2011/04/bilinear-color-interpolation.html
 public final class Gradient {
 	
-	public static class Color 
+	public static class Color implements Serializable
 	{
+		private static final long serialVersionUID = 1L;
+		
 		final int red, green, blue;
 		final String hex;
 		
@@ -17,7 +18,7 @@ public final class Gradient {
 			this.red = r;
 			this.green = g;
 			this.blue = b;
-			this.hex = Integer.toHexString(red) + Integer.toHexString(green) + Integer.toHexString(blue);
+			this.hex = toHex(red) + toHex(green) + toHex(blue);
 		}
 		
 		public int getRed() {
@@ -34,6 +35,11 @@ public final class Gradient {
 		
 		public String getHexCode() {
 			return hex;
+		}
+		
+		private String toHex(int c) {
+			String sc = Integer.toHexString(c);
+			return sc.length() == 2 ? sc : "0" + sc;
 		}
 	}
 	
@@ -53,24 +59,28 @@ public final class Gradient {
 		
 	}
 	
-	public static Pagination<Color> getColorRow(int row, ColorDistance columnDistance, ColorDistance rowDistance) {
+	public static List<Color> getColorRow(int row, ColorDistance columnDistance, ColorDistance rowDistance) 
+	{
 		int colorsPerRow = 255 / columnDistance.dist;
 		
-		Pagination<Color> pg = new Pagination<Gradient.Color>(row, colorsPerRow);
 		int red, blue;
 		
 		red  = 255 - (row * colorsPerRow);
-		blue = (row * colorsPerRow);
+		blue = (row * rowDistance.dist);
 		
 		List<Color> colors = new ArrayList<Gradient.Color>(colorsPerRow);
 		
 		for(int green = 0; green < 256; green += columnDistance.dist) {
-			colors.add(new Color(red, blue, green));
+			colors.add(new Color(red, green, blue));
 		}
 		
-		pg.setItems(colors, 255 * 255);
-		
-		return pg;
+		return colors;
+	}
+	
+	public static int getMaxColors(ColorDistance columnDistance, ColorDistance rowDistance) 
+	{
+		int rows = (255 / rowDistance.dist) - 1;
+		return rows;
 	}
 	
 }
